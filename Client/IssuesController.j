@@ -953,44 +953,52 @@
 - (void)searchFieldDidChange:(id)sender
 {
     if (sender)
-        searchString = [[sender stringValue]  lowercaseString];
+        searchString = [[sender stringValue] lowercaseString];
 
     if (searchString)
     {
         [self showFilterBar];
-        filteredIssues = [];
 
-        var theIssues = repo[displayedIssuesKey];
-        for (var i = 0, count = [theIssues count]; i < count; i++)
+        filteredIssues = [repo[displayedIssuesKey] copy];
+
+        var searchStringComponents = searchString.split(new RegExp("\\s+"));
+
+        for (var i = 0; i < [searchStringComponents count]; i++)
         {
-            var item = [theIssues objectAtIndex:i];
+            var searchStringComponent = [searchStringComponents objectAtIndex:i];
 
-            if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterTitle) &&
-                [[item valueForKey:@"title"] lowercaseString].match(searchString))
+            for (var j = 0; j < [filteredIssues count]; j++)
             {
-                [filteredIssues addObject:[theIssues objectAtIndex:i]];
-                continue;
-            }
+                var item = [filteredIssues objectAtIndex:j];
 
-            if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterCreator) && [item valueForKey:@"user"] !== [CPNull null] &&
-                [[item valueForKey:@"user"] lowercaseString].match(searchString))
-            {
-                [filteredIssues addObject:[theIssues objectAtIndex:i]];
-                continue;
-            }
+                if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterTitle) &&
+                    [[item valueForKey:@"title"] lowercaseString].match(searchStringComponent))
+                {
+                    continue;
+                }
 
-            if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterBody) &&
-                [[item valueForKey:@"body"] lowercaseString].match(searchString))
-            {
-                [filteredIssues addObject:[theIssues objectAtIndex:i]];
-                continue;
-            }
+                if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterCreator) &&
+                    [item valueForKey:@"user"] !== [CPNull null] &&
+                    [[item valueForKey:@"user"] lowercaseString].match(searchStringComponent))
+                {
+                    continue;
+                }
 
-            var tags = [[item objectForKey:@"labels"] componentsJoinedByString:@" "];
-            if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterLabels) &&
-                [tags lowercaseString].match(searchString))
-            {
-                [filteredIssues addObject:[theIssues objectAtIndex:i]];
+                if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterBody) &&
+                    [[item valueForKey:@"body"] lowercaseString].match(searchStringComponent))
+                {
+                    continue;
+                }
+
+                var tags = [[item objectForKey:@"labels"] componentsJoinedByString:@" "];
+                if ((searchFilter === IssuesFilterAll || searchFilter === IssuesFilterLabels) &&
+                    [tags lowercaseString].match(searchStringComponent))
+                {
+                    continue;
+                }
+
+                [filteredIssues removeObjectAtIndex:j];
+                j--;
             }
         }
 
